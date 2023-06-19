@@ -31,11 +31,12 @@ appElement.innerHTML += getModalTemplate();
 //LOGIC
 const modalElement = document.querySelector("#thepower-modal");
 const modalTitle = document.querySelector("#modal-title");
-const modalBody = document.querySelector(".modal-body");
+const modalBody = document.querySelector(".body");
 const galleryElement = document.querySelector("#thepower-gallery");
 const loadingElement = document.querySelector("#thepower-gallery > h1");
 
 let cards;
+let currentCard;
 
 const setupStars = (score) => {
   if (!score) {
@@ -69,6 +70,60 @@ const setupCards = () => {
   });
 };
 
+const getModalBodyTemplate = (cardData) => `
+<img src="${cardData.logo}" alt="${cardData.name}" />
+<h3>Valoración de ${cardData.score.toFixed(2)} con ${
+  cardData.reviews
+} reviews</h3>
+<div class="review-container">
+
+  <button data-score="1">⭐️</button>
+  <button data-score="2">⭐️</button>
+  <button data-score="3">⭐️</button>
+  <button data-score="4">⭐️</button>
+  <button data-score="5">⭐️</button>
+
+
+</div>
+<p>Clicka en una estrella para votar</p>
+
+`;
+
+const postReview = async (id, score) => {
+  try {
+    const res= await fetch(`${TECHNOLOGIES_URL}/${id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        score,
+      }),
+    });
+    const data= await res.json();
+    console.log(data)
+  } catch (err) {
+    console.log(`Error: ${err}`);
+  }
+};
+
+const handleReview = (event) => {
+  const score = Number(event.target.getAttribute("data-score"));
+
+  console.log(score);
+  postReview(currentCard._id, score);
+};
+
+const addScoreButtonListeners = () => {
+  const scoreButtons = document.querySelectorAll(
+    "#thepower-modal .review-container >button"
+  );
+
+  scoreButtons.forEach((button) => {
+    button.addEventListener("click", handleReview);
+  });
+};
+
 // Aqui ahora hacemos request a la api con fetch LO bueno es que puedes concatenar mucos
 
 // fetch(TECHNOLOGIES_URL)
@@ -80,15 +135,17 @@ const setupCards = () => {
 //   });
 
 const setupModalData = (cardData) => {
+  currentCard = cardData;
   modalTitle.innerText = cardData.name;
-
+  modalBody.innerHTML = getModalBodyTemplate(cardData);
+  addScoreButtonListeners();
 };
 
 const handleOpenModal = (event) => {
   const cardID = event.target.id;
   console.log(cards);
-  const cardData = cards.find((card) => card._id === cardID);
- 
+  const cardData = cards.find((card) => card._id == cardID);
+
   setupModalData(cardData);
   modalElement.style.display = "block";
 };
